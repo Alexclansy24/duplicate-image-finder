@@ -1,4 +1,4 @@
-
+from PIL import Image
 from pathlib import Path
 import imagehash
 from hasher import calculate_phash, calculate_sha256
@@ -63,3 +63,18 @@ def find_near_duplicates(
             duplicate_groups.append(sorted(group))
 
     return duplicate_groups
+
+
+def find_corrupted_images(image_files: list[Path]) -> list[Path]:
+    """Return image files that Pillow cannot verify or decode."""
+    corrupted_files = []
+
+    for file_path in image_files:
+        try:
+            with Image.open(file_path) as image:
+                image.verify()
+        except (OSError, ValueError, SyntaxError) as error:
+            print(f"Corrupted or unreadable image {file_path}: {error}")
+            corrupted_files.append(file_path)
+
+    return corrupted_files

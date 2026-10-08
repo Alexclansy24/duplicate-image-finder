@@ -6,6 +6,7 @@ from tkinter import filedialog, messagebox, ttk
 
 from duplicate_finder import (
     DEFAULT_PHASH_THRESHOLD,
+    find_corrupted_images,
     find_exact_duplicates,
     find_near_duplicates,
 )
@@ -72,6 +73,9 @@ class DuplicateImageFinderApp:
         )
         self.near_tree = self._create_results_tab(
             "Near Duplicates"
+        )
+        self.corrupted_tree = self._create_results_tab(
+        "Corrupted Files"
         )
         
         delete_frame = ttk.Frame(main)
@@ -158,7 +162,7 @@ class DuplicateImageFinderApp:
             self._clear_results()
 
     def _clear_results(self) -> None:
-        for tree in (self.exact_tree, self.near_tree):
+        for tree in (self.exact_tree, self.near_tree, self.corrupted_tree):
             tree.delete(*tree.get_children())
 
     def start_scan(self) -> None:
@@ -189,11 +193,16 @@ class DuplicateImageFinderApp:
     def _scan_worker(self, folder: str) -> None:
         try:
             image_files = scan_folder(folder)
-
-            exact_groups = find_exact_duplicates(image_files)
+            corrupted_files = find_corrupted_images(image_files)
+            valid_images = [
+                file_path
+                for file_path in image_files
+                if file_path not in set(corrupted_files)
+            ]
+            exact_groups = find_exact_duplicates(valid_images)
 
             near_groups = find_near_duplicates(
-                image_files,
+                valid_images,
                 threshold=DEFAULT_PHASH_THRESHOLD,
             )
 
@@ -227,6 +236,7 @@ class DuplicateImageFinderApp:
                     len(image_files),
                     exact_groups,
                     filtered_near_groups,
+                    corrupted_files,
                 ),
             )
 
@@ -257,14 +267,26 @@ class DuplicateImageFinderApp:
         image_count: int,
         exact_groups: list[list[Path]],
         near_groups: list[list[Path]],
+        corrupted_files: list[Path],
     ) -> None:
         self._display_group(self.exact_tree, exact_groups)
         self._display_group(self.near_tree, near_groups)
+        for file_path in sorted(corrupted_files):
+            self.corrupted_tree.insert(
+                "",
+                "end",
+                values=(
+                    "Corrupted",
+                    file_path.name,
+                    str(file_path),
+                ),
+            )
 
         self.summary.set(
             f"Images scanned: {image_count}\n"
             f"Exact duplicate groups: {len(exact_groups)}\n"
             f"Near-duplicate groups: {len(near_groups)}\n"
+            f"Corrupted files: {len(corrupted_files)}\n"
             f"pHash threshold: {DEFAULT_PHASH_THRESHOLD}"
         )
 
@@ -284,7 +306,11 @@ class DuplicateImageFinderApp:
 
     def delete_selected(self) -> None:
         selected_tab = self.tabs.index(self.tabs.select())
-        tree = self.exact_tree if selected_tab == 0 else self.near_tree
+        tree = (
+            self.exact_tree,
+            self.near_tree,
+            self.corrupted_tree,
+        )[selected_tab]
         selected_items = tree.selection()
 
         if not selected_items:
@@ -340,7 +366,11 @@ class DuplicateImageFinderApp:
     
     def open_selected_image(self) -> None:
         selected_tab = self.tabs.index(self.tabs.select())
-        tree = self.exact_tree if selected_tab == 0 else self.near_tree
+        tree = (
+            self.exact_tree,
+            self.near_tree,
+            self.corrupted_tree,
+        )[selected_tab]
         selected_items = tree.selection()
 
         if not selected_items:
