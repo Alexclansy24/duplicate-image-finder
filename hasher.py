@@ -1,6 +1,9 @@
 import hashlib
 from pathlib import Path
 
+import imagehash
+from PIL import Image
+
 
 def calculate_sha256(file_path: Path) -> str:
     """
@@ -14,3 +17,9 @@ def calculate_sha256(file_path: Path) -> str:
             sha256.update(chunk)
 
     return sha256.hexdigest()
+
+def calculate_phash(file_path: Path) -> imagehash.ImageHash:
+    """Generate a perceptual hash for an image."""
+
+    with Image.open(file_path) as image:
+        return imagehash.phash(image)

@@ -1,21 +1,17 @@
-from scanner import scan_folder
-from duplicate_finder import find_exact_duplicates
+
+from pathlib import Path
+
+from hasher import calculate_phash
 
 
-folder = input("Enter folder path: ")
+folder = Path(input("Enter image folder path: ").strip().strip('"'))
 
-image_files = scan_folder(folder)
+for file_path in folder.iterdir():
+    if not file_path.is_file():
+        continue
 
-print(f"\nScanned {len(image_files)} image(s).")
-
-duplicate_groups = find_exact_duplicates(image_files)
-
-print(f"Found {len(duplicate_groups)} duplicate group(s).\n")
-
-for index, group in enumerate(duplicate_groups, start=1):
-    print(f"Duplicate Group {index}:")
-
-    for file_path in group:
-        print(f"  {file_path}")
-
-    print()
+    try:
+        phash = calculate_phash(file_path)
+        print(f"{file_path.name} -> {phash}")
+    except Exception as error:
+        print(f"Skipped {file_path.name}: {error}")
