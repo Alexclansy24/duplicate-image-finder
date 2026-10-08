@@ -1,7 +1,5 @@
-def main():
-    print("Duplicate Image Finder")
-    print("Application starting...")
+from ui.app import run_app
 
 
 if __name__ == "__main__":
-    main()
+    run_app()
