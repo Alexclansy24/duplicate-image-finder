@@ -1,17 +1,21 @@
 
-from pathlib import Path
+from scanner import scan_folder
+from duplicate_finder import find_near_duplicates
 
-from hasher import calculate_phash
 
+folder = input("Enter folder path: ").strip().strip('"')
+image_files = scan_folder(folder)
 
-folder = Path(input("Enter image folder path: ").strip().strip('"'))
+print(f"\nScanned {len(image_files)} image(s).")
 
-for file_path in folder.iterdir():
-    if not file_path.is_file():
-        continue
+groups = find_near_duplicates(image_files, threshold=10)
 
-    try:
-        phash = calculate_phash(file_path)
-        print(f"{file_path.name} -> {phash}")
-    except Exception as error:
-        print(f"Skipped {file_path.name}: {error}")
+print(f"Found {len(groups)} near-duplicate group(s).\n")
+
+for index, group in enumerate(groups, start=1):
+    print(f"Near-Duplicate Group {index}:")
+
+    for file_path in group:
+        print(f"  {file_path}")
+
+    print()
