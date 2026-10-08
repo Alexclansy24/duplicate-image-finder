@@ -22,7 +22,7 @@ class DuplicateImageFinderApp:
         self.selected_folder = tk.StringVar(value="No folder selected")
         self.status = tk.StringVar(value="Select a folder to get started.")
         self.summary = tk.StringVar(value="No scan results yet.")
-
+        self.is_scanning = False
         self._build_ui()
 
     def _build_ui(self) -> None:
@@ -162,6 +162,9 @@ class DuplicateImageFinderApp:
             tree.delete(*tree.get_children())
 
     def start_scan(self) -> None:
+        if self.is_scanning:
+            return
+        self.is_scanning = True
         folder = self.selected_folder.get()
 
         if not Path(folder).is_dir():
@@ -266,10 +269,12 @@ class DuplicateImageFinderApp:
         )
 
         self.status.set("Scan completed.")
+        self.is_scanning = False
         self.scan_button.config(state="normal")
 
     def _scan_failed(self, error: Exception) -> None:
         self.status.set("Scan failed.")
+        self.is_scanning = False
         self.scan_button.config(state="normal")
 
         messagebox.showerror(
@@ -376,7 +381,7 @@ class DuplicateImageFinderApp:
                 "Unable to Open Image",
                 f"Could not open the image:\n{error}",
             )
-            
+
 def run_app() -> None:
     root = tk.Tk()
     DuplicateImageFinderApp(root)

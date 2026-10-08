@@ -1,6 +1,6 @@
 
 from pathlib import Path
-
+import imagehash
 from hasher import calculate_phash, calculate_sha256
 
 
@@ -37,7 +37,7 @@ def find_near_duplicates(
     if not 0 <= threshold <= 64:
         raise ValueError("Threshold must be between 0 and 64.")
 
-    phash_groups: dict[Path, object] = {}
+    phash_groups: dict[Path, imagehash.ImageHash] = {}
 
     for file_path in image_files:
         try:
